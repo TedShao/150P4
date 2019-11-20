@@ -86,11 +86,11 @@ int fs_info(void)
                     free_blocks_count++;
     }
     printf("FS Info:\n");
-    printf("total_blk_count=%u\n", superBlk.data_block_amount);
-    printf("fat_blk_count=%u\n", superBlk.fat_block);
-    printf("rdir_blk=%u\n", superBlk.root_dir_index);
-    printf("data_blk=%u\n", superBlk.data_block_index);
-    printf("data_blk_count=%u\n", superBlk.data_block_amount);
+    printf("total data_block_amount=%u\n", superBlk.data_block_amount);
+    printf("fat_block=%u\n", superBlk.fat_block);
+    printf("root_dir_index=%u\n", superBlk.root_dir_index);
+    printf("data_block_index=%u\n", superBlk.data_block_index);
+    printf("data_block_amount=%u\n", superBlk.data_block_amount);
     printf("fat_free_ratio=%u/%u\n", free_blocks_count, superBlk.data_block_amount);
     printf("rdir_free_ratio=%u/%u\n", free_rdir_count, 128);
 

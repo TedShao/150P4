@@ -56,7 +56,11 @@ int fs_mount(const char *diskname)
 		return -1;
 	}
 	size_t i;
-	char
+	size_t fat_size;
+	fat_size = 4096 * superBlk.fat_block;
+	fat.entry = malloc(sizeof(fat_size));
+
+
 
 
 
@@ -64,6 +68,9 @@ int fs_mount(const char *diskname)
 	for (i = 0; i < 32; i++) {
 		fd_tmp->root_dir = NULL;
 		fd_tmp->offset = 0;
+		if(block_read(i, fat.entries) == -1) {
+			return -1;
+		}
 	}
 	return 0;
 

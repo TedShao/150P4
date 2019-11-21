@@ -10,7 +10,7 @@
 #define SIG "ECS150FS"
 
 /* TODO: Phase 1 */
-struct superblock {
+struct __attribute__((__packed__)) superblock {
 	int8_t signature[8];
 	int16_t block_amount;
 	int16_t root_dir_index;
@@ -20,11 +20,11 @@ struct superblock {
 	int8_t padding[4079];
 };
 
-struct fat {
+struct __attribute__((__packed__)) fat {
 	int16_t entry;
 };
 
-struct root_dir {
+struct __attribute__((__packed__)) root_dir {
 	int8_t filename[16];
 	int32_t filesize;
 	int16_t first_index;
@@ -97,6 +97,11 @@ int fs_mount(const char *diskname)
 int fs_umount(void)
 {
 	if (block_write(0, superBlk) == -1) {
+		return -1;
+	}
+
+
+	if (block_disk_close() == -1) {
 		return -1;
 	}
 }

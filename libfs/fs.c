@@ -7,9 +7,11 @@
 #include "disk.h"
 #include "fs.h"
 
+#define SIG "ECS150FS"
+
 /* TODO: Phase 1 */
 struct superblock {
-	int8_t signature;
+	int8_t signature[8];
 	int16_t block_amount;
 	int16_t root_dir_index;
 	int16_t data_block_index;
@@ -55,6 +57,22 @@ int fs_mount(const char *diskname)
 	if (block_read(0, superBlk) == -1) {
 		return -1;
 	}
+
+
+//check sig
+	char sig_check[8]
+	memcpy(sig_check, superBlk->signature, 8);
+	if (strcmp(SIG, sig_check) != 0) {
+		return -1;
+	}
+
+//check block_amount
+	if (block_disk_count() != superBlk->block_amount) {
+		return -1;
+	}
+
+
+//check fat read
 	size_t i;
 	size_t fat_size;
 	fat_size = 4096 * superBlk.fat_block;

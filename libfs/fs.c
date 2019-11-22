@@ -23,6 +23,7 @@ typedef struct __attribute__((__packed__)) Superblock {
 Superblock_t superblock = NULL;
 
 uint16_t *fat_array = NULL;
+// uint16_t *fat_array;
 
 typedef struct __attribute__((__packed__)) Root_dir {
     uint8_t  filename[FS_FILENAME_LEN];
@@ -31,34 +32,21 @@ typedef struct __attribute__((__packed__)) Root_dir {
     uint8_t  padding[10];
 } *Root_dir_t;
 
-Root_dir_t root_dir[FS_FILE_MAX_COUNT];
+Root_dir_t root_dir = NULL;
 
-// typedef struct __attribute__((__packed__)) Fd {
-//     Root_dir_t *root_dir;
-//     size_t offset;
-// } *Fd_t;
+typedef struct __attribute__((__packed__)) Fd {
+    Root_dir_t *root_dir;
+    size_t offset;
+} *Fd_t;
 
-// Fd_t fd[FS_FILE_MAX_COUNT];
+static Fd_t fd[FS_OPEN_MAX_COUNT];
 
-
-/**
- * fs_mount - Mount a file system
- * @diskname: Name of the virtual disk file
- *
- * Open the virtual disk file @diskname and mount the file system that it
- * contains. A file system needs to be mounted before files can be read from it
- * with fs_read() or written to it with fs_write().
- *
- * Return: -1 if virtual disk file @diskname cannot be opened, or if no valid
- * file system can be located. 0 otherwise.
- */
 int fs_mount(const char *diskname)
 {
     /* open disk & error check */
     if (block_disk_open(diskname) == -1) {
         return -1;
     }
-
     /* read & error check superblock */
     superblock = (Superblock_t)malloc(sizeof(struct Superblock));
     if (superblock == NULL) {
@@ -69,9 +57,12 @@ int fs_mount(const char *diskname)
     }
 
     /* check sig */
-    char sig_checker[8];
-    memcpy(sig_checker, superblock->signature, 8);
-    if (strcmp(SIG, sig_checker) != 0) {
+    // char sig_checker[8];
+    // memcpy(sig_checker, superblock->signature, 8);
+    // if (strcmp(SIG, sig_checker) != 0) {
+    //     return -1;
+    // }
+    if (memcmp(superblock->signature, SIG, 8) != 0) {
         return -1;
     }
 
@@ -79,38 +70,56 @@ int fs_mount(const char *diskname)
     if (block_disk_count() != superblock->total_blks) {
         return -1;
     }
+    if (superblock->root_dir_idx != superblock->total_fat_blks + 1) {
+        return -1;
+    }
+    if (superblock->data_blk_idx != superblock->root_dir_idx + 1) {
+        return -1;
+    }
+    if (superblock->total_data_blks == 0) {
+        return -1;
+    }
 
     /* read & check fat blocks */
-    size_t fat_arr_size = 4096 * superblock->total_fat_blks;
+    size_t fat_arr_size = BLOCK_SIZE / 2 * superblock->total_fat_blks;
     fat_array = (uint16_t*)malloc(fat_arr_size * sizeof(uint16_t));
     if (fat_array == NULL) {
         return -1;
     }
     for (int i = 0; i < superblock->total_fat_blks; i++) {
-        if (block_read(i+1, fat_array + (i * 4096)) == -1) {
+        if (block_read(i+1, fat_array + (i * BLOCK_SIZE) / 2) == -1) {
             return -1;
         }
     }
+    fat_array[0] = 0xFFFF;
 
     /* read & check root directory */
+    root_dir = (Root_dir_t)malloc(FS_FILE_MAX_COUNT * sizeof(struct Root_dir));
+    if (root_dir == NULL) {
+        return -1;
+    }
     if (block_read(superblock->root_dir_idx, root_dir) == -1) {
         return -1;
+    }
+
+    for (int i = 0; i < 32; i++) {
+        fd[i] = NULL;
     }
 
     return 0;
 }
 
-/**
- * fs_umount - Unmount file system
- *
- * Unmount the currently mounted file system and close the underlying virtual
- * disk file.
- *
- * Return: -1 if no underlying virtual disk was opened, or if the virtual disk
- * cannot be closed, or if there are still open file descriptors. 0 otherwise.
- */
 int fs_umount(void)
 {
+    if (block_disk_count() == -1) {
+        return -1;
+    }
+
+    for (int i = 0; i < 32; i++) {
+        if (fd[i] != NULL) {
+            return -1;
+        }
+    }
     /* write & check superblock */
     if (block_write(0, superblock) == -1) {
         return -1;
@@ -118,7 +127,7 @@ int fs_umount(void)
 
     /* write & check fat blocks */
     for (int i = 0; i < superblock->total_fat_blks; i++) {
-        if (block_write(i+1, fat_array + (i * 2048)) == -1) {
+        if (block_write(i+1, fat_array + (i * BLOCK_SIZE) / 2) == -1) {
             return -1;
         }
     }
@@ -128,16 +137,21 @@ int fs_umount(void)
         return -1;
     }
 
-
     /* close file and error check */
     if (block_disk_close() == -1) {
         return -1;
     }
 
     /* free allocated memory */
-    free(superblock);
-    free(fat_array);
-
+    if (superblock != NULL) {
+        free(superblock);
+    }
+    if (root_dir != NULL) {
+        free(root_dir);
+    }
+    if (fat_array != NULL) {
+        free(fat_array);
+    }
     return 0;
 }
 
@@ -153,18 +167,18 @@ int fs_info(void)
 
     /* count the number of free root directories*/
     int free_rdir_count = 0;
-    for (int i = 0; i < 128; i++) {
-        if (root_dir[i]->filesize == 0) {
+    for (int i = 0; i < FS_FILE_MAX_COUNT; ++i) {
+        if (root_dir[i].filename[0] == '\0') {
             free_rdir_count++;
         }
     }
 
     printf("FS Info:\n");
-    printf("total blocks=%u\n", superblock->total_blks);
-    printf("total_fat_blks=%u\n", superblock->total_fat_blks);
-    printf("root_dir_idx=%u\n", superblock->root_dir_idx);
-    printf("data_blk_idx=%u\n", superblock->data_blk_idx);
-    printf("total_data_blks=%u\n", superblock->total_data_blks);
+    printf("total_blk_count=%u\n", superblock->total_blks);
+    printf("fat_blk_count=%u\n", superblock->total_fat_blks);
+    printf("rdir_blk=%u\n", superblock->root_dir_idx);
+    printf("data_blk=%u\n", superblock->data_blk_idx);
+    printf("data_blk_count=%u\n", superblock->total_data_blks);
     printf("fat_free_ratio=%u/%u\n", free_blocks_count, superblock->total_data_blks);
     printf("rdir_free_ratio=%u/%u\n", free_rdir_count, 128);
 

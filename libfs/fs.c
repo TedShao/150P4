@@ -69,7 +69,7 @@ int fs_mount(const char *diskname)
     }
 
     /* check sig */
-    char sig_checker[8]
+    char sig_checker[8];
     memcpy(sig_checker, superblock->signature, 8);
     if (strcmp(SIG, sig_checker) != 0) {
         return -1;
@@ -81,13 +81,13 @@ int fs_mount(const char *diskname)
     }
 
     /* read & check fat blocks */
-    size_t fat_arr_size = 2048 * superblock->total_fat_blks;
+    size_t fat_arr_size = 4096 * superblock->total_fat_blks;
     fat_array = (uint16_t*)malloc(fat_arr_size * sizeof(uint16_t));
     if (fat_array == NULL) {
         return -1;
     }
     for (int i = 0; i < superblock->total_fat_blks; i++) {
-        if (block_read(i+1, fat_array + (i * 2048)) == -1) {
+        if (block_read(i+1, fat_array + (i * 4096)) == -1) {
             return -1;
         }
     }
@@ -96,7 +96,7 @@ int fs_mount(const char *diskname)
     if (block_read(superblock->root_dir_idx, root_dir) == -1) {
         return -1;
     }
-    
+
     return 0;
 }
 
@@ -145,7 +145,7 @@ int fs_info(void)
 {
     /* count the number of free data blocks */
     int free_blocks_count = 0;
-    for (int i = 0; i < superblock.total_data_blks; i++) {
+    for (int i = 0; i < superblock->total_data_blks; i++) {
         if (fat_array[i] == 0) {
             free_blocks_count++;
         }
@@ -154,64 +154,73 @@ int fs_info(void)
     /* count the number of free root directories*/
     int free_rdir_count = 0;
     for (int i = 0; i < 128; i++) {
-        if (root_dir[i].filesize == 0) {
+        if (root_dir[i]->filesize == 0) {
             free_rdir_count++;
         }
     }
 
     printf("FS Info:\n");
-    printf("total blocks=%u\n", superblock.total_blks);
-    printf("total_fat_blks=%u\n", superblock.total_fat_blks);
-    printf("root_dir_idx=%u\n", superblock.root_dir_idx);
-    printf("data_blk_idx=%u\n", superblock.data_blk_idx);
-    printf("total_data_blks=%u\n", superblock.total_data_blks);
-    printf("fat_free_ratio=%u/%u\n", free_blocks_count, superblock.total_data_blks);
+    printf("total blocks=%u\n", superblock->total_blks);
+    printf("total_fat_blks=%u\n", superblock->total_fat_blks);
+    printf("root_dir_idx=%u\n", superblock->root_dir_idx);
+    printf("data_blk_idx=%u\n", superblock->data_blk_idx);
+    printf("total_data_blks=%u\n", superblock->total_data_blks);
+    printf("fat_free_ratio=%u/%u\n", free_blocks_count, superblock->total_data_blks);
     printf("rdir_free_ratio=%u/%u\n", free_rdir_count, 128);
 
+    return 0;
 }
 
 int fs_create(const char *filename)
 {
     /* TODO: Phase 2 */
+    return 0;
 }
 
 int fs_delete(const char *filename)
 {
     /* TODO: Phase 2 */
+    return 0;
 }
 
 int fs_ls(void)
 {
     /* TODO: Phase 2 */
+    return 0;
 }
 
 int fs_open(const char *filename)
 {
     /* TODO: Phase 3 */
+    return 0;
 }
 
 int fs_close(int fd)
 {
     /* TODO: Phase 3 */
+    return 0;
 }
 
 int fs_stat(int fd)
 {
     /* TODO: Phase 3 */
+    return 0;
 }
 
 int fs_lseek(int fd, size_t offset)
 {
     /* TODO: Phase 3 */
+    return 0;
 }
 
 int fs_write(int fd, void *buf, size_t count)
 {
     /* TODO: Phase 4 */
+    return 0;
 }
 
 int fs_read(int fd, void *buf, size_t count)
 {
     /* TODO: Phase 4 */
+    return 0;
 }
-

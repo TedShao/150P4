@@ -170,19 +170,62 @@ int fs_info(void)
 
     return 0;
 }
-
+/*
 int fs_create(const char *filename)
 {
-    /* TODO: Phase 2 */
-    return 0;
-}
+	if (strlen(filename) == 0 || strlen(filename) > FS_FILENAME_LEN) {
+      return -1;
+  }
+  for (int i = 0; i <= FS_FILE_MAX_COUNT; i++) {
+      if (strcmp(filename, Root[i].filename) == 0) {
+          return -1;
+      }
+      if (i == FS_FILE_MAX_COUNT && Root[FS_FILE_MAX_COUNT].filename != '\0') {
+          return -1;
+      }
+  }
 
+  memset(Root.root_dir_index, 0, BLOCK_SIZE/FS_FILE_MAX_COUNT);
+  strcpy(Root.filename, filename);
+  Root[i].filesize = 0;
+  Root[i].first_index = FAT_EOC;
+  return 0;
+}
+*/
+
+/**
+ * fs_delete - Delete a file
+ * @filename: File name
+ *
+ * Delete the file named @filename from the root directory of the mounted file
+ * system.
+ *
+ * Return: -1 if @filename is invalid, if there is no file named @filename to
+ * delete, or if file @filename is currently open. 0 otherwise.
+ */
+
+/*
 int fs_delete(const char *filename)
 {
-    /* TODO: Phase 2 */
-    return 0;
-}
+  if (strlen(filename) == 0 || strlen(filename) > FS_FILENAME_LEN) {
+      return -1;
+  }
+  int k = 0;
+  for (int i == 0; i <= FS_FILE_MAX_COUNT; i++) {
+      if (strcmp(filename, Root[i].filename) == 0) {
+          break;
+      } else {
+        k++;
+      }
+      if (k == FS_FILE_MAX_COUNT) {
+        return -1;
+      }
+  }
 
+
+
+}
+*/
 int fs_ls(void)
 {
     /* TODO: Phase 2 */

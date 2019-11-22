@@ -9,7 +9,7 @@
 
 #define SIG "ECS150FS"
 
-
+/* Superblock definition */
 typedef struct __attribute__((__packed__)) Superblock {
     uint8_t  signature[8];
     uint16_t total_blks;            // total number of blocks
@@ -22,9 +22,10 @@ typedef struct __attribute__((__packed__)) Superblock {
 
 Superblock_t superblock = NULL;
 
+/* global fat array, each element in fat array is an entry (2 bytes) */
 uint16_t *fat_array = NULL;
-// uint16_t *fat_array;
 
+/* root directory array, maximum 128 file directories */
 typedef struct __attribute__((__packed__)) Root_dir {
     uint8_t  filename[FS_FILENAME_LEN];
     uint32_t filesize;
@@ -34,12 +35,13 @@ typedef struct __attribute__((__packed__)) Root_dir {
 
 Root_dir_t root_dir = NULL;
 
+/* file directory array, total maximum 32 open files */
 typedef struct __attribute__((__packed__)) Fd {
     Root_dir_t *root_dir;
     size_t offset;
 } *Fd_t;
 
-static Fd_t fd[FS_OPEN_MAX_COUNT];
+Fd_t fd = NULL;
 
 int fs_mount(const char *diskname)
 {
@@ -47,6 +49,7 @@ int fs_mount(const char *diskname)
     if (block_disk_open(diskname) == -1) {
         return -1;
     }
+
     /* read & error check superblock */
     superblock = (Superblock_t)malloc(sizeof(struct Superblock));
     if (superblock == NULL) {
@@ -56,17 +59,10 @@ int fs_mount(const char *diskname)
         return -1;
     }
 
-    /* check sig */
-    // char sig_checker[8];
-    // memcpy(sig_checker, superblock->signature, 8);
-    // if (strcmp(SIG, sig_checker) != 0) {
-    //     return -1;
-    // }
+    /* check superblock */
     if (memcmp(superblock->signature, SIG, 8) != 0) {
         return -1;
     }
-
-    /* check total_blks */
     if (block_disk_count() != superblock->total_blks) {
         return -1;
     }
@@ -87,7 +83,7 @@ int fs_mount(const char *diskname)
         return -1;
     }
     for (int i = 0; i < superblock->total_fat_blks; i++) {
-        if (block_read(i+1, fat_array + (i * BLOCK_SIZE) / 2) == -1) {
+        if (block_read(i+1, fat_array + (i * BLOCK_SIZE / 2)) == -1) {
             return -1;
         }
     }
@@ -102,6 +98,8 @@ int fs_mount(const char *diskname)
         return -1;
     }
 
+    /* initialize open file array by NULL */
+    fd = (Fd_t)malloc(FS_OPEN_MAX_COUNT * sizeof(struct Fd));
     for (int i = 0; i < 32; i++) {
         fd[i] = NULL;
     }
@@ -127,7 +125,7 @@ int fs_umount(void)
 
     /* write & check fat blocks */
     for (int i = 0; i < superblock->total_fat_blks; i++) {
-        if (block_write(i+1, fat_array + (i * BLOCK_SIZE) / 2) == -1) {
+        if (block_write(i+1, fat_array + (i * BLOCK_SIZE / 2)) == -1) {
             return -1;
         }
     }
@@ -151,6 +149,9 @@ int fs_umount(void)
     }
     if (fat_array != NULL) {
         free(fat_array);
+    }
+    if (fd != NULL) {
+        free(fd);
     }
     return 0;
 }
@@ -187,57 +188,14 @@ int fs_info(void)
 
 int fs_create(const char *filename)
 {
-/*	if (strlen(filename) == 0 || strlen(filename) > FS_FILENAME_LEN) {
-      return -1;
-  }
-  for (int i = 0; i <= FS_FILE_MAX_COUNT; i++) {
-      if (strcmp(filename, Root[i].filename) == 0) {
-          return -1;
-      }
-      if (i == FS_FILE_MAX_COUNT && Root[FS_FILE_MAX_COUNT].filename != '\0') {
-          return -1;
-      }
-  }
-
-  memset(Root.root_dir_index, 0, BLOCK_SIZE/FS_FILE_MAX_COUNT);
-  strcpy(Root.filename, filename);
-  Root[i].filesize = 0;
-  Root[i].first_index = FAT_EOC;*/
-  return 0;
+    /* TODO: Phase 2 */
+    return 0;
 }
 
-
-/**
- * fs_delete - Delete a file
- * @filename: File name
- *
- * Delete the file named @filename from the root directory of the mounted file
- * system.
- *
- * Return: -1 if @filename is invalid, if there is no file named @filename to
- * delete, or if file @filename is currently open. 0 otherwise.
- */
-
-
 int fs_delete(const char *filename)
-{/*
-  if (strlen(filename) == 0 || strlen(filename) > FS_FILENAME_LEN) {
-      return -1;
-  }
-  int k = 0;
-  for (int i == 0; i <= FS_FILE_MAX_COUNT; i++) {
-      if (strcmp(filename, Root[i].filename) == 0) {
-          break;
-      } else {
-        k++;
-      }
-      if (k == FS_FILE_MAX_COUNT) {
-        return -1;
-      }
-  }
-*/
-
-return 0;
+{
+    /* TODO: Phase 2 */
+    return 0;
 }
 
 int fs_ls(void)

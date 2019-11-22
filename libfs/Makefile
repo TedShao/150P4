@@ -1,5 +1,5 @@
 # Target library
-lib := libuthread.a
+lib := libfs.a
 objs := disk.o fs.o
 
 CC := gcc

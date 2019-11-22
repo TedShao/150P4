@@ -101,7 +101,7 @@ int fs_mount(const char *diskname)
     /* initialize open file array by NULL */
     fd = (Fd_t)malloc(FS_OPEN_MAX_COUNT * sizeof(struct Fd));
     for (int i = 0; i < 32; i++) {
-        fd[i] = NULL;
+        fd[i].root_dir = NULL;
     }
 
     return 0;
@@ -114,7 +114,7 @@ int fs_umount(void)
     }
 
     for (int i = 0; i < 32; i++) {
-        if (fd[i] != NULL) {
+        if (fd[i].root_dir != NULL) {
             return -1;
         }
     }

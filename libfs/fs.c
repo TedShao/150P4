@@ -115,7 +115,7 @@ int fs_umount(void)
 
     /* if there exists any opened file */
     for (int i = 0; i < 32; i++) {
-        if (File_descriptors[i.open_file != NULL) {
+        if (File_descriptors[i].open_file != NULL) {
             return -1;
         }
     }
@@ -231,7 +231,7 @@ int fs_delete(const char *filename)
     }
 
     for (int i = 0; i < FS_OPEN_MAX_COUNT; i++) {
-        if (File_descriptors.root_dir != NULL && strcmp(filename, (char*)fd.root_dir.filename) == 0) {
+        if (File_descriptors->open_file != NULL && strcmp(filename, (char*)File_descriptors->open_file->filename) == 0) {
             return -1;
         }
     }
@@ -247,7 +247,7 @@ int fs_delete(const char *filename)
     }
 
     /* free file's conetent in FAT */
-    delete_blk_idx = root_dir[targetIndex].first_blk_index;
+    int delete_blk_idx = root_dir[targetIndex].first_blk_index;
     while (delete_blk_idx != FAT_EOC) {
         uint16_t temp = fat_array[delete_blk_idx];
         fat_array[delete_blk_idx] = 0;
@@ -312,10 +312,10 @@ int fs_open(const char *filename)
         return -1;
     }
 
-    File_descriptors[fd_idx].open_file = root_dir[file_location];
+    File_descriptors[fd_idx].open_file = &(root_dir[file_location]);
     File_descriptors[fd_idx].offset = 0;
 
-    return i;
+    return fd_idx;
 }
 
 int fs_close(int fd)
@@ -344,7 +344,7 @@ int fs_stat(int fd)
         return -1;
     }
 
-    return File_descriptors[fd].open_file.filesize;
+    return File_descriptors[fd].open_file->filesize;
 }
 
 int fs_lseek(int fd, size_t offset)
@@ -357,7 +357,7 @@ int fs_lseek(int fd, size_t offset)
         return -1;
     }
 
-    if (offset > File_descriptors[fd].open_file.filesize) {
+    if (offset > File_descriptors[fd].open_file->filesize) {
         return -1;
     }
 
@@ -388,13 +388,13 @@ int fs_lseek(int fd, size_t offset)
 
 int fs_write(int fd, void *buf, size_t count)
 {
-    if (fd < 0 || fd >= FS_OPEN_MAX_COUNT) {
-        return -1;
-    }
-
-    if (File_descriptors[fd].open_file == NULL) {
-        return -1;
-    }
+    // if (fd < 0 || fd >= FS_OPEN_MAX_COUNT) {
+    //     return -1;
+    // }
+    //
+    // if (File_descriptors[fd].open_file == NULL) {
+    //     return -1;
+    // }
 
 
 
@@ -422,13 +422,13 @@ int fs_write(int fd, void *buf, size_t count)
 
 int fs_read(int fd, void *buf, size_t count)
 {
-    if (fd < 0 || fd >= FS_OPEN_MAX_COUNT) {
-        return -1;
-    }
-
-    if (File_descriptors[fd].open_file == NULL) {
-        return -1;
-    }
+    // if (fd < 0 || fd >= FS_OPEN_MAX_COUNT) {
+    //     return -1;
+    // }
+    //
+    // if (File_descriptors[fd].open_file == NULL) {
+    //     return -1;
+    // }
 
     // /* find length of bounce buffer */
     // int start_idx = File_descriptors[fd].offset / BLOCK_SIZE;
@@ -451,16 +451,16 @@ int fs_read(int fd, void *buf, size_t count)
     // temp = File_descriptors[fd].open_file.first_blk_index;
     // for (int i = 0; i < )
 
-    int first_block_idx = File_descriptors[fd].offset / BLOCK_SIZE;
-    int last_block_idx  = (offset + count - 1) / BLOCK_SIZE;
-
-    uint16_t temp = File_descriptors[fd].open_file.first_blk_index;
-    int last_fat_blk_idx = -1;
-    while (temp != FAT_EOC) {
-        last_fat_blk_idx++;
-        temp = fat_array[temp];
-    }
-
-    if (last_block_idx > last_fat_blk_idx) last_block_idx = last_fat_blk_idx;
+    // int first_block_idx = File_descriptors[fd].offset / BLOCK_SIZE;
+    // int last_block_idx  = (offset + count - 1) / BLOCK_SIZE;
+    //
+    // uint16_t temp = File_descriptors[fd].open_file.first_blk_index;
+    // int last_fat_blk_idx = -1;
+    // while (temp != FAT_EOC) {
+    //     last_fat_blk_idx++;
+    //     temp = fat_array[temp];
+    // }
+    //
+    // if (last_block_idx > last_fat_blk_idx) last_block_idx = last_fat_blk_idx;
     return 0;
 }

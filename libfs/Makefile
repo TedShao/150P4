@@ -1,6 +1,24 @@
 # Target library
-lib := libfs.a
-/home/cs150jp/public/p4/test/test_fs_student.sh
+lib := libuthread.a
+objs := disk.o fs.o
+
+CC := gcc
+CFLAGS := -Wall -Werror
+CFLAGS += -g
+
 all: $(lib)
 
-## TODO: Phase 1
+deps := $(patsubst %.o,%.d,$(objs))
+-include $(deps)
+DEPFLAGS = -MMD -MF $(@:.o=.d)
+
+$(lib): $(objs)
+	ar rcs $@ $^
+
+%.o: %.c
+	@echo "CC $@"
+	$(Q)$(CC) $(CFLAGS) -c -o $@ $<
+
+clean:
+	@echo "CLEAN"
+	$(Q)rm -f $(lib) $(objs) $(deps)

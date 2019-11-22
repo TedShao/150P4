@@ -260,8 +260,6 @@ int fs_delete(const char *filename)
     root_dir[targetIndex].filesize = 0;
     root_dir[targetIndex].first_blk_index = 0;
     return 0;
-
-  return 0;
 }
 
 
@@ -314,8 +312,8 @@ int fs_open(const char *filename)
         return -1;
     }
 
-    File_descriptors[i].open_file = root_dir[i];
-    File_descriptors[i].offset = 0;
+    File_descriptors[fd_idx].open_file = root_dir[file_location];
+    File_descriptors[fd_idx].offset = 0;
 
     return i;
 }
@@ -368,14 +366,101 @@ int fs_lseek(int fd, size_t offset)
     return 0;
 }
 
+/**
+ * fs_write - Write to a file
+ * @fd: File descriptor
+ * @buf: Data buffer to write in the file
+ * @count: Number of bytes of data to be written
+ *
+ * Attempt to write @count bytes of data from buffer pointer by @buf into the
+ * file referenced by file descriptor @fd. It is assumed that @buf holds at
+ * least @count bytes.
+ *
+ * When the function attempts to write past the end of the file, the file is
+ * automatically extended to hold the additional bytes. If the underlying disk
+ * runs out of space while performing a write operation, fs_write() should write
+ * as many bytes as possible. The number of written bytes can therefore be
+ * smaller than @count (it can even be 0 if there is no more space on disk).
+ *
+ * Return: -1 if file descriptor @fd is invalid (out of bounds or not currently
+ * open). Otherwise return the number of bytes actually written.
+ */
+
 int fs_write(int fd, void *buf, size_t count)
 {
-    /* TODO: Phase 4 */
+    if (fd < 0 || fd >= FS_OPEN_MAX_COUNT) {
+        return -1;
+    }
+
+    if (File_descriptors[fd].open_file == NULL) {
+        return -1;
+    }
+
+
+
     return 0;
 }
 
+/**
+ * fs_read - Read from a file
+ * @fd: File descriptor
+ * @buf: Data buffer to be filled with data
+ * @count: Number of bytes of data to be read
+ *
+ * Attempt to read @count bytes of data from the file referenced by file
+ * descriptor @fd into buffer pointer by @buf. It is assumed that @buf is large
+ * enough to hold at least @count bytes.
+ *
+ * The number of bytes read can be smaller than @count if there are less than
+ * @count bytes until the end of the file (it can even be 0 if the file offset
+ * is at the end of the file). The file offset of the file descriptor is
+ * implicitly incremented by the number of bytes that were actually read.
+ *
+ * Return: -1 if file descriptor @fd is invalid (out of bounds or not currently
+ * open). Otherwise return the number of bytes actually read.
+ */
+
 int fs_read(int fd, void *buf, size_t count)
 {
-    /* TODO: Phase 4 */
+    if (fd < 0 || fd >= FS_OPEN_MAX_COUNT) {
+        return -1;
+    }
+
+    if (File_descriptors[fd].open_file == NULL) {
+        return -1;
+    }
+
+    // /* find length of bounce buffer */
+    // int start_idx = File_descriptors[fd].offset / BLOCK_SIZE;
+    // int end_idx = (offset + count - 1) / BLOCK_SIZE;
+
+    // uint16_t temp = File_descriptors[fd].open_file.first_blk_index;
+    // int last_idx = -1;
+    // while (temp != FAT_EOC) {
+    //     last_idx++;
+    //     temp = fat_array[temp];
+    // }
+    // if (end_idx > last_idx) {
+    //     end_idx = last_idx;
+    // }
+    // int length = end_idx - start_idx + 1;
+
+    // /* get bounce buffer */
+    // uint16_t bounce_buffer = (uint16_t*)malloc(BLOCK_SIZE / 2 * length * sizeof(uint16_t));
+
+    // temp = File_descriptors[fd].open_file.first_blk_index;
+    // for (int i = 0; i < )
+
+    int first_block_idx = File_descriptors[fd].offset / BLOCK_SIZE;
+    int last_block_idx  = (offset + count - 1) / BLOCK_SIZE;
+
+    uint16_t temp = File_descriptors[fd].open_file.first_blk_index;
+    int last_fat_blk_idx = -1;
+    while (temp != FAT_EOC) {
+        last_fat_blk_idx++;
+        temp = fat_array[temp];
+    }
+
+    if (last_block_idx > last_fat_blk_idx) last_block_idx = last_fat_blk_idx;
     return 0;
 }

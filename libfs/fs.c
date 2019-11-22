@@ -170,10 +170,10 @@ int fs_info(void)
 
     return 0;
 }
-/*
+
 int fs_create(const char *filename)
 {
-	if (strlen(filename) == 0 || strlen(filename) > FS_FILENAME_LEN) {
+/*	if (strlen(filename) == 0 || strlen(filename) > FS_FILENAME_LEN) {
       return -1;
   }
   for (int i = 0; i <= FS_FILE_MAX_COUNT; i++) {
@@ -188,10 +188,10 @@ int fs_create(const char *filename)
   memset(Root.root_dir_index, 0, BLOCK_SIZE/FS_FILE_MAX_COUNT);
   strcpy(Root.filename, filename);
   Root[i].filesize = 0;
-  Root[i].first_index = FAT_EOC;
+  Root[i].first_index = FAT_EOC;*/
   return 0;
 }
-*/
+
 
 /**
  * fs_delete - Delete a file
@@ -204,9 +204,9 @@ int fs_create(const char *filename)
  * delete, or if file @filename is currently open. 0 otherwise.
  */
 
-/*
+
 int fs_delete(const char *filename)
-{
+{/*
   if (strlen(filename) == 0 || strlen(filename) > FS_FILENAME_LEN) {
       return -1;
   }
@@ -221,11 +221,11 @@ int fs_delete(const char *filename)
         return -1;
       }
   }
-
-
-
-}
 */
+
+return 0;
+}
+
 int fs_ls(void)
 {
     /* TODO: Phase 2 */

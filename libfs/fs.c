@@ -388,17 +388,51 @@ int fs_lseek(int fd, size_t offset)
 
 int fs_write(int fd, void *buf, size_t count)
 {
-    // if (fd < 0 || fd >= FS_OPEN_MAX_COUNT) {
-    //     return -1;
-    // }
-    //
-    // if (File_descriptors[fd].open_file == NULL) {
-    //     return -1;
-    // }
+    if (fd < 0 || fd >= FS_OPEN_MAX_COUNT) {
+        return -1;
+    }
+    if (File_descriptors[fd].open_file == NULL) {
+        return -1;
+    }
+
+    if (count == 0) {
+        return 0;
+    }
+    //if no space
+    if (File_descriptors[fd].open_file->first_blk_index == FAT_EOC) {
+        //extend
+
+        // int free_blocks_count = 0;
+        // for (int i = 0; i < superblock->total_data_blks; i++) {
+        //     if (fat_array[i] == 0) {
+        //         free_blocks_count++;
+        //     }
+        // }
+
+        size_t new_free_block;
+        for (int i = 0; i < superblock->total_data_blks;i++) {
+            if (i == superblock.total_data_blks) {
+                new_free_block = 0;
+            }
+            if (fat_array[i] == 0) {
+              new_free_block = i;
+              break;
+            }
+        }
+        fat_array[new_free_block] = FAT_EOC;
+
+        File_descriptors[fd].open_file->first_blk_index = new_free_block;
+    }
+    //new first block index
+    uint16_t head_index = File_descriptors[fd].open_file->first_blk_index + superblock.data_blk_idx;
+    //Write
+    //int block_write(size_t block, const void *buf);
+    int write_num = block_write(head_index, buf);
+
+    //need update size
 
 
-
-    return 0;
+    return write_num;
 }
 
 /**

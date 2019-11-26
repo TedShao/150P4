@@ -496,5 +496,40 @@ int fs_read(int fd, void *buf, size_t count)
     // }
     //
     // if (last_block_idx > last_fat_blk_idx) last_block_idx = last_fat_blk_idx;
-    return 0;
+    
+    if (fd < 0 || fd >= FS_OPEN_MAX_COUNT) {
+        return -1;
+    }
+    
+    if (File_descriptors[fd].open_file == NULL) {
+        return -1;
+    }
+
+
+    if (File_descriptors[fd].open_file->filesize <= File_descriptors[fd].offset) {
+    	return 0;
+    }
+
+    //offset reach eof
+    if (File_descriptors[fd].open_file->first_blk_index == FAT_EOC) {
+    	return 0;
+    }
+
+    uint16_t bounce_buffer = (uint16_t*)malloc(BLOCK_SIZE / 2 * length * sizeof(uint16_t));
+    for (int i = 0;i < superblock->total_data_blks;i++) {
+    	block_read(File_descriptors[fd].open_file->first_blk_index + superblock->data_blk_idx, bounce_buffer + (BLOCK_SIZE * i));
+    }
+
+    //whether count > offset
+    size_t offset_count;
+    if ((File_descriptors.open_file->filesize - File_descriptors.offset) < count) {
+    	offset_count = File_descriptors.open_file->filesize - File_descriptors.offset;
+    } else {
+    	offset_count = count;
+    }
+
+    //copy data from bounce_buffer
+    size_t file_offset = File_descriptors.offset % BLOCK_SIZE;
+    memcpy(buf, (file_offset + bounce_buffer), offset_count);
+    return offset_count;
 }

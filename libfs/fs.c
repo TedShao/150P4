@@ -5,7 +5,7 @@
 #include <string.h>
 
 #include "disk.h"
-#include "fs.h"
+#include "fs.h" 
 
 #define SIG "ECS150FS"
 #define FAT_EOC 0xffff
@@ -411,7 +411,7 @@ int fs_write(int fd, void *buf, size_t count)
 
         size_t new_free_block;
         for (int i = 0; i < superblock->total_data_blks;i++) {
-            if (i == superblock.total_data_blks) {
+            if (i == superblock->total_data_blks) {
                 new_free_block = 0;
             }
             if (fat_array[i] == 0) {
@@ -424,7 +424,7 @@ int fs_write(int fd, void *buf, size_t count)
         File_descriptors[fd].open_file->first_blk_index = new_free_block;
     }
     //new first block index
-    uint16_t head_index = File_descriptors[fd].open_file->first_blk_index + superblock.data_blk_idx;
+    uint16_t head_index = File_descriptors[fd].open_file->first_blk_index + superblock->data_blk_idx;
     //Write
     //int block_write(size_t block, const void *buf);
     int write_num = block_write(head_index, buf);
@@ -515,21 +515,35 @@ int fs_read(int fd, void *buf, size_t count)
     	return 0;
     }
 
-    uint16_t bounce_buffer = (uint16_t*)malloc(BLOCK_SIZE / 2 * length * sizeof(uint16_t));
+
+    int start_idx = File_descriptors[fd].offset / BLOCK_SIZE;
+    int end_idx = (File_descriptors[fd].offset + count - 1) / BLOCK_SIZE;
+
+    uint16_t temp = File_descriptors[fd].open_file->first_blk_index;
+    int last_idx = -1;
+    while (temp != FAT_EOC) {
+        last_idx++;
+        temp = fat_array[temp];
+    }
+    if (end_idx > last_idx) {
+        end_idx = last_idx;
+    }
+    int length = end_idx - start_idx + 1;
+    char* bounce_buffer = (char*)malloc(BLOCK_SIZE / 2 * length * sizeof(char));
     for (int i = 0;i < superblock->total_data_blks;i++) {
     	block_read(File_descriptors[fd].open_file->first_blk_index + superblock->data_blk_idx, bounce_buffer + (BLOCK_SIZE * i));
     }
 
     //whether count > offset
     size_t offset_count;
-    if ((File_descriptors.open_file->filesize - File_descriptors.offset) < count) {
-    	offset_count = File_descriptors.open_file->filesize - File_descriptors.offset;
+    if ((File_descriptors->open_file->filesize - File_descriptors->offset) < count) {
+    	offset_count = File_descriptors->open_file->filesize - File_descriptors->offset;
     } else {
     	offset_count = count;
     }
 
     //copy data from bounce_buffer
-    size_t file_offset = File_descriptors.offset % BLOCK_SIZE;
+    size_t file_offset = File_descriptors->offset % BLOCK_SIZE;
     memcpy(buf, (file_offset + bounce_buffer), offset_count);
     return offset_count;
 }

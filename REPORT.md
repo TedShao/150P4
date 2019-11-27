@@ -107,6 +107,25 @@ with `filesize` of `open_file`. If no error condition is satisfied, we asssign t
 # Phase 4: File reading / writing
 
 ## `fs_read()`
-
+First of all, we still doing the error check at the beginning. Then we define two variables 
+`start_blk_idx` and `end_blk_idx` which represent the index of the start block and the index of
+the end block which we need to read. Then after iterate in the fat array we get the current index
+and the total length and store them in a bounce buffer. Finally, we copy the part of buffer into
+the output buffer and return the new exactly count.
 
 ## `fs_write()`
+Similar to the read function, we still did the error check for the disk and the count number.
+Then we allocate the extra Fat by the helper function. Thus, we first read the Fat from the first
+block and also use a bounce buffer to store. And we make different situations for single block,
+mid-file write. Checking if there were no block and allocate a block for the file.
+
+# Testing
+For the testing part, we use the `fs_make.x` file to first create two disks: a valid disk `disk1.fs`
+and a invalid disk `disk2.fs`. To check several corner cases for the APIs. For the read and write 
+parts, we check several cases eg: 1. writing into the file at offset 0 and read it at the end of the 
+file; 2.read an empty file; 3. writing more than a block but less than two blocks.
+
+# Resources
+lecture slides 10 
+discussion slides p4 
+project 4 prompt
